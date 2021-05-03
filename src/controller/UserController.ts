@@ -28,12 +28,10 @@ export class UserController {
     };
 
     static newUser = async (req: Request, res: Response) => {
-        const {name, username, password, email} = req.body;
+        const {username, password} = req.body;
         const user = new (User);
-        user.name = name;
         user.username = username;
         user.password = password;
-        user.email = email;
         // Validación
         const errores = await validate(user);
         if (errores.length > 0) {
@@ -43,11 +41,14 @@ export class UserController {
 
         const userRepository = getRepository(User)
         try {
+            user.hashPassword();
             await userRepository.save(user);
         } catch (error) {
             return res.status(409).json({ message: 'El usuario ya existe'});
         }
-        res.send('Usuario creado')
+        const ID = user.id;
+        res.json({message: 'Usuario Creado', ID})
+        //res.send('Usuario creado');
     };    
 
     static editUser = async (req: Request, res: Response) => {

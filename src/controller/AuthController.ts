@@ -1,6 +1,8 @@
 import { getRepository } from 'typeorm';
 import { Request, Response } from 'express';
 import { User } from '../entity/User';
+import * as jwt from 'jsonwebtoken';
+import config from '../config/config';
 
 class AuthController {
     static login = async (req: Request, res: Response) => {
@@ -15,11 +17,16 @@ class AuthController {
         let pass: User;
         try {
             user = await userRepository.findOneOrFail({where:{username}});
-            pass = await userRepository.findOneOrFail({where:{password}});
         } catch (error) {
             return res.status(400).json({message: 'El usuario o la contraseña son incorrectos'});
         }
-        res.send(user);
+
+        //Check Password
+        if(!user.checkPassword(password)){
+            return res.status(400).json({message: 'El usuarioo o la cantraseña incorrectos'});
+        }
+        const token = jwt.sign({userid: user.id, username: user.username}, config.jwtSecret);
+        res.json({message: 'OK', token});
     }
 }
 export default AuthController;
